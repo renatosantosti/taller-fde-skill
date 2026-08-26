@@ -1,118 +1,98 @@
-"""Orchestration stub: deterministic gates around an LLM judgment step.
-
-This is not a company workflow. It is the integration pattern the assignment
-asks for: classify work, call a model only where judgment is required, and
-fail closed to a human on timeout, bad schema, refusal, or low confidence.
-
-Replace the NotImplementedError helpers after the workflow is chosen.
-"""
+"""CLI entry: runs the MAF intake workflow. Not a second orchestrator."""
 
 from __future__ import annotations
 
+import argparse
+import asyncio
 import json
-from dataclasses import dataclass
-from typing import Any
+import sys
+from dotenv import load_dotenv
 
-from src.errors import (
-    LlmTimeoutError,
-    LowConfidenceError,
-    NeedsHumanError,
-    PolicyError,
-    SchemaError,
-)
+from src.assemble import assemble_dossier
+from src.errors import ConfigError, NeedsHumanError, PipelineError
+from src.inbox import find_lead, list_pending, validate_pending
+from src.paths import INBOX_ROOT, REPO_ROOT
 
 
-# Steps that are rules belong here, not in a prompt.
-DETERMINISTIC_REQUIRED_FIELDS = ("id", "payload")
-
-
-@dataclass(frozen=True)
-class PipelineResult:
-    status: str  # "ok" | "needs_human"
-    data: dict[str, Any] | None
-    human_reason: str | None = None
-
-
-def validate_input(event: dict[str, Any]) -> dict[str, Any]:
-    """Deterministic: reject malformed events before any model call."""
-    missing = [field for field in DETERMINISTIC_REQUIRED_FIELDS if field not in event]
-    if missing:
-        raise NeedsHumanError(
-            f"Input missing required fields: {missing}. Not an LLM problem."
-        )
-    return event
-
-
-def call_llm(event: dict[str, Any]) -> str:
-    """LLM judgment: non-deterministic step. Not implemented in the scaffold."""
-    raise NotImplementedError(
-        "TODO: call the model for the chosen workflow step. "
-        "Must surface timeout, policy refusal, and raw text for schema parse."
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Taller project-intake worker (pending folders only)."
     )
+    parser.add_argument(
+        "--assemble-only",
+        action="store_true",
+        help="Validate and print the dossier. No LLM, no MAF.",
+    )
+    parser.add_argument("--list", action="store_true", help="List pending lead ids.")
+    parser.add_argument("lead_id", nargs="?", help="Lead folder name under inbox/pending/.")
+    return parser
 
 
-def parse_and_validate_output(raw: str) -> dict[str, Any]:
-    """Deterministic: structured output or schema failure (never 'best effort')."""
+def _resume_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="python -m src.pipeline resume")
+    parser.add_argument("lead_id")
+    parser.add_argument("--decision", required=True, choices=["bid", "decline", "request_call"])
+    parser.add_argument("--notes", default="")
+    return parser
+
+
+def assemble_only(lead_id: str) -> None:
+    folder = find_lead(lead_id)
+    validate_pending(folder)
+    print(assemble_dossier(folder))
+
+
+async def _async_main(args: argparse.Namespace) -> int:
+    from src.workflow import run_lead
+
+    if not args.lead_id:
+        print("Provide a lead_id, --list, or resume.", file=sys.stderr)
+        return 2
     try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise SchemaError("Model output is not valid JSON") from exc
-    if not isinstance(data, dict):
-        raise SchemaError("Model output must be a JSON object")
-    return data
-
-
-def confidence_ok(data: dict[str, Any], *, threshold: float = 0.7) -> None:
-    """Deterministic gate on a model-provided confidence field, if present."""
-    confidence = data.get("confidence")
-    if confidence is None:
-        return
-    try:
-        value = float(confidence)
-    except (TypeError, ValueError) as exc:
-        raise SchemaError("confidence must be a number") from exc
-    if value < threshold:
-        raise LowConfidenceError(f"confidence {value} < {threshold}")
-
-
-def run(event: dict[str, Any]) -> PipelineResult:
-    """One pipeline pass.
-
-    Happy path returns status "ok". Every anticipated LLM failure becomes
-    status "needs_human" — fail closed, no side effects.
-    """
-    try:
-        validated = validate_input(event)
-        raw = call_llm(validated)
-        data = parse_and_validate_output(raw)
-        confidence_ok(data)
-        return PipelineResult(status="ok", data=data)
-    except NotImplementedError:
-        raise
-    except LlmTimeoutError as exc:
-        raise NeedsHumanError("LLM timeout", cause=exc) from exc
-    except SchemaError as exc:
-        raise NeedsHumanError("Invalid model output schema", cause=exc) from exc
-    except PolicyError as exc:
-        raise NeedsHumanError("Policy or model refusal", cause=exc) from exc
-    except LowConfidenceError as exc:
-        raise NeedsHumanError("Low confidence", cause=exc) from exc
-    except NeedsHumanError:
-        raise
-
-
-def main() -> None:
-    sample = {"id": "scaffold", "payload": {"text": "TODO: real event"}}
-    try:
-        result = run(sample)
-    except NotImplementedError as exc:
-        print(f"scaffold: {exc}")
-        return
+        result = await run_lead(args.lead_id)
+    except ConfigError as exc:
+        print(f"config: {exc}", file=sys.stderr)
+        return 2
     except NeedsHumanError as exc:
-        print(f"needs_human: {exc.reason}")
-        return
-    print(result)
+        print(f"needs_human: {exc.reason}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    load_dotenv(REPO_ROOT / ".env")
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "resume":
+        resume_args = _resume_parser().parse_args(argv[1:])
+
+        async def _resume() -> int:
+            from src.workflow import resume_lead
+
+            result = await resume_lead(
+                resume_args.lead_id, resume_args.decision, resume_args.notes
+            )
+            print(json.dumps(result, indent=2))
+            return 0
+
+        return asyncio.run(_resume())
+    args = _parser().parse_args(argv)
+    if args.list:
+        print("\n".join(list_pending()) or "(none)")
+        return 0
+    if args.assemble_only:
+        if not args.lead_id:
+            print("assemble-only requires a lead_id", file=sys.stderr)
+            return 2
+        try:
+            assemble_only(args.lead_id)
+        except PipelineError as exc:
+            print(f"needs_human: {exc}", file=sys.stderr)
+            return 1
+        return 0
+    INBOX_ROOT.mkdir(parents=True, exist_ok=True)
+    return asyncio.run(_async_main(args))
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
