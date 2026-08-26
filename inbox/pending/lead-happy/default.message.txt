@@ -1,0 +1,7 @@
+Hello Taller,
+
+We need a partner to rebuild our customer portal. Today it is a mix of jQuery and a SOAP API. We want a React front end, authenticated users, and a billing integration with our ERP.
+
+Budget is not a purchase order yet. We would like a discovery workshop next month and then a build proposal.
+
+Contact: Alex Rivera, Head of Digital, Northwind Retail.
