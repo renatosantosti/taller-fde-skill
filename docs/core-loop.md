@@ -1,39 +1,28 @@
 # Core loop — audit, evals, deployment
 
-The training requires the loop **audit → evals → deployment**. Use this order; do not start with the model.
+The training requires **audit → evals → deployment**. This intake workflow follows that order.
 
 ## 1. Audit
 
-Understand the process **before** proposing AI.
-
-- Map steps, actors, systems, and data (`docs/workflow.md`).
-- Classify each step: deterministic / LLM judgment / human-in-the-loop.
-- List existing systems and integration contracts (`docs/deployment.md`).
-- Separate what is already a rule (no LLM needed) from what is judgment.
-
-Audit output: the map plus a list of what **not** to automate.
+- Map: [workflow.md](workflow.md) (S1–S13 classified).
+- Systems: [deployment.md](deployment.md). Extraction and channels named, not built.
+- Only S8 is LLM judgment. Commercial action is HITL (S12).
+- ADRs: [adrs/README.md](adrs/README.md).
 
 ## 2. Evals
 
-Measure model judgment **before** wiring it into the live flow.
-
-- Cases in `evals/` (input, context, expected result, HITL notes).
-- Cover the happy path, ambiguity, refusal, and invalid schema.
-- An eval that never fails is not measuring anything.
-
-Eval output: evidence that the LLM-judgment step is reliable enough, or that it should stay HITL.
+- Cases: [evals/cases.example.json](../evals/cases.example.json).
+- `pytest --cov=src` mocks LiteLLM: happy path completes; unknown engagement pauses; `resume --decision decline` does not call the model again. Unit tests live under `tests/unit/`; MAF HITL under `tests/integration/`.
+- Cover schema/policy by mapping those errors to HITL (adr007).
 
 ## 3. Deployment
 
-Integrate only what passed audit and evals.
-
-- Explicit integration points with systems that already exist.
-- Error handling on every model call (`src/errors.py`, `src/pipeline.py`).
-- Human fallback on timeout, schema, policy, or low confidence.
-- No silent side effect (email, ticket, payment) from unvalidated output.
+- Worker CLI + filesystem inbox + file bus locally.
+- Production swaps: FileBus → Azure Service Bus; FileCheckpointStorage → Cosmos; pending writer → Document Intelligence.
+- Fail closed. No email to the lead from model output.
 
 ## How an agent should work in this repo
 
 1. Read `AGENTS.md` and `docs/brief.md`.
-2. If the workflow is still TODO: stop and ask for the business case. Do not invent one.
-3. If the workflow exists: change the map, strategy, and code together — the step type decides the code type (rule vs. LLM vs. HITL).
+2. Do not implement OCR or live channels.
+3. Keep step types, ADRs, and code aligned. New technical decisions get `docs/adrs/adr009.md` onward.

@@ -4,17 +4,19 @@ Source of truth for any coding assistant (Cursor, Claude Code, GitHub Copilot, C
 
 ## Purpose
 
-Submission repository for **The AI Forward-Deployed Engineer (FDE)** training. Demonstrate FDE judgment: map a workflow, classify each step, and decide where (and where not) to apply AI.
+Submission repository for **The AI Forward-Deployed Engineer (FDE)** training: Taller **project / RFP intake**.
 
-## Current state (scaffold)
+## Current state
 
-- Structure, rubric, and integration patterns are in place.
-- **Do not invent** a company, process, or business content. Fill `docs/workflow.md` and `docs/deployment.md` only after the owner chooses the case.
+- The business case is chosen. Do not invent a different company or process.
+- The pipeline **starts at `inbox/pending/`**. Do not implement Tesseract, Azure Document Intelligence, email, or WhatsApp.
+- Orchestration is **Microsoft Agent Framework** (`src/workflow.py`). The only model call is **LiteLLM** (`src/llm.py`). HITL uses a **bus port** with a file-bus implementation (`src/bus.py`).
+- Record new important technical decisions as the next file in `docs/adrs/` (`adr009.md`, …).
 - **Do not commit, push, or `--amend` without explicit authorization.**
 
 ## Language
 
-All code, comments, documentation, skills, and assistant pointer files are **English**. Do not add Portuguese (or any other language) to repo artifacts.
+All code, comments, documentation, skills, ADRs, and assistant pointer files are **English**.
 
 ## Where each rubric criterion lives
 
@@ -24,9 +26,9 @@ All code, comments, documentation, skills, and assistant pointer files are **Eng
 | 2 | Deployment strategy | x3 | `docs/deployment.md` |
 | 3 | README quality | x2 | `README.md` |
 | 4 | Code clarity | x2 | `src/` |
-| 5 | Error handling | x2 | `src/errors.py`, `src/pipeline.py` |
+| 5 | Error handling | x2 | `src/errors.py`, `src/workflow.py`, `src/llm.py` |
 
-Rubric detail and disqualification: `docs/brief.md`. Methodology audit → evals → deployment: `docs/core-loop.md`. Assignment skill: `skills/fde-assignment/SKILL.md`.
+Also: `docs/adrs/`, `docs/brief.md`, `docs/core-loop.md`, `skills/fde-assignment/SKILL.md`.
 
 ## Required step classification
 
@@ -36,13 +38,13 @@ Every workflow step must be **exactly one** of:
 - **LLM judgment** — interpretation, ambiguous classification, drafting, unstructured-text extraction.
 - **human-in-the-loop** — risk, policy, exception, approval, fallback after a model failure.
 
-Do not put an LLM on a deterministic step. Do not automate a HITL step without an escalation rule.
+Do not put an LLM on a deterministic step. Do not automate a HITL step without an escalation rule. S8 is the only LLM step in this repo.
 
 ## Code conventions
 
-- Python 3.11+, stdlib first; no heavy framework until the owner asks.
+- Python 3.11+. Allowed packages: `agent-framework`, `litellm`, `python-dotenv`, `pytest`, `pytest-asyncio`, `pytest-cov`. Do not add LangGraph, LangChain, OCR, or Azure Service Bus SDKs.
 - Short functions, explicit names, comments only for *why* (integration, failure, HITL).
-- Every LLM call has error handling: timeout, invalid schema, refusal, human fallback. Use the types in `src/errors.py`.
+- Every LLM call has error handling: timeout, invalid schema, refusal, provider failure, human fallback. Types in `src/errors.py`.
 - No secrets in the repo. Credentials live in `.env` (gitignored).
 
 ## Native pointers

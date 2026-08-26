@@ -1,9 +1,11 @@
 # evals
 
-Eval cases for the **audit → evals → deployment** loop. Do not deploy an LLM step that has no cases covering the happy path, ambiguity, refusal, and invalid schema.
+Cases for **audit → evals → deployment**. Live provider calls are optional.
 
-| File | Role |
+| Path | Role |
 |---|---|
-| `cases.example.json` | Schema and empty placeholders — copy, do not invent business content |
+| `cases.example.json` | Expected outcomes per fixture / failure mode |
+| `tests/unit/` | Module tests; LiteLLM `completion` mocked |
+| `tests/integration/` | MAF workflow in-process; `call_llm` mocked |
 
-When the workflow exists, add real cases (input, expected type of outcome, HITL notes). Keep production data and secrets out of git.
+CI must not use a real model, Azure Service Bus, or Document Intelligence (adr009). Keep production data out of git.

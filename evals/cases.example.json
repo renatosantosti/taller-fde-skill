@@ -1,35 +1,42 @@
 {
   "version": 1,
-  "description": "Placeholder eval cases. Replace TODOs after the workflow is chosen. Do not invent business content.",
+  "description": "Eval cases for Taller project intake. Live LLM is optional; unit tests mock LiteLLM.",
   "cases": [
     {
       "id": "happy-path",
-      "step": "TODO-workflow-step-id",
+      "step": "S8",
       "type": "LLM judgment",
-      "input": {},
-      "context": {},
+      "input": {"lead_id": "lead-happy"},
       "expected": {
         "status": "ok",
-        "notes": "TODO: structured fields the model must return"
+        "notes": "Structured intake when fit and confidence pass"
       }
     },
     {
       "id": "ambiguous",
-      "step": "TODO-workflow-step-id",
+      "step": "S12",
       "type": "human-in-the-loop",
-      "input": {},
-      "context": {},
+      "input": {"lead_id": "lead-ambiguous"},
       "expected": {
         "status": "needs_human",
-        "reason": "TODO: ambiguity that must not be auto-resolved"
+        "reason": "unknown engagement or low confidence — publish IntakeNeedsReview"
+      }
+    },
+    {
+      "id": "thin-dossier",
+      "step": "S7",
+      "type": "human-in-the-loop",
+      "input": {"lead_id": "lead-thin"},
+      "expected": {
+        "status": "needs_human",
+        "reason": "ThinDossierError — fail closed, no OCR in this repo"
       }
     },
     {
       "id": "invalid-schema",
-      "step": "TODO-workflow-step-id",
+      "step": "S10",
       "type": "LLM judgment",
-      "input": {},
-      "context": {},
+      "input": {"lead_id": "lead-happy"},
       "expected": {
         "status": "needs_human",
         "reason": "SchemaError — fail closed"
@@ -37,13 +44,22 @@
     },
     {
       "id": "policy-refusal",
-      "step": "TODO-workflow-step-id",
+      "step": "S10",
       "type": "human-in-the-loop",
-      "input": {},
-      "context": {},
+      "input": {"lead_id": "lead-happy"},
       "expected": {
         "status": "needs_human",
         "reason": "PolicyError — fail closed"
+      }
+    },
+    {
+      "id": "hitl-resume-decline",
+      "step": "S13",
+      "type": "human-in-the-loop",
+      "input": {"lead_id": "lead-ambiguous", "decision": "decline"},
+      "expected": {
+        "status": "completed_after_hitl",
+        "notes": "Resume does not call the model again"
       }
     }
   ]

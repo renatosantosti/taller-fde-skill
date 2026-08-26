@@ -14,7 +14,7 @@ Canonical skill. Native pointers in `.cursor/skills/fde-assignment/` and `.claud
 ## Before any edit
 
 1. Read `AGENTS.md` and `docs/brief.md`.
-2. If `docs/workflow.md` still has company/process TODOs, **do not invent** the case. Ask the owner.
+2. If changing extraction, channels, or a live bus, **stop** — those are out of scope (see ADRs).
 3. Do not commit without explicit authorization.
 
 ## Rubric (the work must cover)
@@ -34,4 +34,4 @@ Canonical skill. Native pointers in `.cursor/skills/fde-assignment/` and `.claud
 
 ## Integration
 
-Every LLM call goes through `src/pipeline.py` (or a successor) and the errors in `src/errors.py`. Failure closes to a human, not to a side effect.
+Every LLM call goes through `src/llm.py` inside the MAF workflow (`src/workflow.py`). Failure closes to HITL via the bus, not to a side effect.
