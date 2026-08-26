@@ -12,5 +12,6 @@ Important technical choices for this FDE submission. One decision per file, numb
 | [adr006.md](adr006.md) | Closed-loop HITL; never auto-message the lead |
 | [adr007.md](adr007.md) | Fail closed to HITL |
 | [adr008.md](adr008.md) | English-only repo artifacts |
+| [adr009.md](adr009.md) | Tests mock LiteLLM; MAF runs in-process |
 
-New important decisions continue as `adr009.md`.
+New important decisions continue as `adr010.md`.
