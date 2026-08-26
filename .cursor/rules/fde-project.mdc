@@ -1,0 +1,15 @@
+---
+description: FDE project rules — read AGENTS.md and the training rubric
+alwaysApply: true
+---
+
+# taller-fde-skill (Cursor)
+
+Before editing, read:
+
+1. `AGENTS.md` — source of truth (do not duplicate rules here)
+2. `docs/brief.md` — brief and rubric
+3. `skills/fde-assignment/SKILL.md` — how to work the assignment
+
+Do not invent a company or process while `docs/workflow.md` is still TODO.
+Do not commit without explicit authorization from the owner.

@@ -1,0 +1,15 @@
+---
+description: Python code clarity and error handling for LLM integrations
+globs: **/*.py
+alwaysApply: false
+---
+
+# Python in this repo
+
+Follow `AGENTS.md`. Error and orchestration details: `src/errors.py`, `src/pipeline.py`.
+
+- Short functions, explicit names. Comments only for why (integration, failure, HITL).
+- Every LLM call handles: timeout, invalid schema, refusal/policy, low confidence.
+- Failure **closes to a human** (`needs_human`) — never fire a side effect from unvalidated output.
+- No secrets in code. No `except Exception: pass`.
+- Stdlib first; do not add a heavy framework unless the owner asks.
