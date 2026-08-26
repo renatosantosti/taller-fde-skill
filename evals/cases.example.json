@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "description": "Placeholder eval cases. Replace TODOs after the workflow is chosen. Do not invent business content.",
+  "cases": [
+    {
+      "id": "happy-path",
+      "step": "TODO-workflow-step-id",
+      "type": "LLM judgment",
+      "input": {},
+      "context": {},
+      "expected": {
+        "status": "ok",
+        "notes": "TODO: structured fields the model must return"
+      }
+    },
+    {
+      "id": "ambiguous",
+      "step": "TODO-workflow-step-id",
+      "type": "human-in-the-loop",
+      "input": {},
+      "context": {},
+      "expected": {
+        "status": "needs_human",
+        "reason": "TODO: ambiguity that must not be auto-resolved"
+      }
+    },
+    {
+      "id": "invalid-schema",
+      "step": "TODO-workflow-step-id",
+      "type": "LLM judgment",
+      "input": {},
+      "context": {},
+      "expected": {
+        "status": "needs_human",
+        "reason": "SchemaError — fail closed"
+      }
+    },
+    {
+      "id": "policy-refusal",
+      "step": "TODO-workflow-step-id",
+      "type": "human-in-the-loop",
+      "input": {},
+      "context": {},
+      "expected": {
+        "status": "needs_human",
+        "reason": "PolicyError — fail closed"
+      }
+    }
+  ]
+}
