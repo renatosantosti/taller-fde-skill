@@ -15,10 +15,28 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.coverage
+htmlcov/
 
 # Eval dumps that may contain production-like data
 evals/cases.json
 evals/results/
+
+# Intake runtime (keep fixtures and .gitkeep)
+inbox/in_analysis/*
+!inbox/in_analysis/.gitkeep
+inbox/completed/*
+!inbox/completed/.gitkeep
+inbox/needs_human/*
+!inbox/needs_human/.gitkeep
+bus/intake-needs-review/*
+!bus/intake-needs-review/.gitkeep
+bus/intake-decisions/*
+!bus/intake-decisions/.gitkeep
+checkpoints/**
+!checkpoints/.gitkeep
+!checkpoints/leads/
+!checkpoints/leads/.gitkeep
 
 # OS / editor
 .DS_Store
