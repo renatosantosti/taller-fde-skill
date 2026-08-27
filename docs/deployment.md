@@ -30,11 +30,12 @@ Decisions: [docs/adrs/](adrs/README.md).
 
 ## Runtime shape
 
-- **Trigger:** CLI over a pending `lead_id` (stand-in for a queue consumer on `pending/`).
+- **Trigger:** CLI over a pending `lead_id` (stand-in for a queue consumer on `pending/`). Same CLI in a venv or in Docker (see adr010).
 - **Orchestrator:** Microsoft Agent Framework workflow. Deterministic executors call inbox/assemble/fit. The synthesize executor calls LiteLLM. HITL uses `ctx.request_info()` and `FileCheckpointStorage`.
 - **Model boundary:** assembled dossier text in; JSON intake out; no side effects toward the lead.
 - **HITL queue:** `IntakeNeedsReview` on the bus plus `inbox/needs_human/{lead_id}/`. Resume: `python -m src.pipeline resume <lead_id> --decision bid|decline|request_call`.
-- **Observability:** stdout, eval cases in `evals/`, checkpoint files under `checkpoints/` (gitignored).
+- **Packaging:** `Dockerfile` / one-service `docker-compose.yml`. Secrets from host `.env`. Volumes for `inbox/`, `bus/`, `checkpoints/`. No sidecar LLM or bus containers.
+- **Observability:** stdout (venv or `docker compose run` / `docker logs`), eval cases in `evals/`, checkpoint files under `checkpoints/` (gitignored).
 
 ## Core loop in this deployment
 

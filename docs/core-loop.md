@@ -17,7 +17,7 @@ The training requires **audit → evals → deployment**. This intake workflow f
 
 ## 3. Deployment
 
-- Worker CLI + filesystem inbox + file bus locally.
+- Worker CLI + filesystem inbox + file bus locally (venv or Docker image; see adr010).
 - Production swaps: FileBus → Azure Service Bus; FileCheckpointStorage → Cosmos; pending writer → Document Intelligence.
 - Fail closed. No email to the lead from model output.
 
@@ -25,4 +25,4 @@ The training requires **audit → evals → deployment**. This intake workflow f
 
 1. Read `AGENTS.md` and `docs/brief.md`.
 2. Do not implement OCR or live channels.
-3. Keep step types, ADRs, and code aligned. New technical decisions get `docs/adrs/adr009.md` onward.
+3. Keep step types, ADRs, and code aligned. New technical decisions get `docs/adrs/adr011.md` onward.

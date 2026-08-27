@@ -49,14 +49,33 @@ Criterion **#2** (weight x3). Full strategy: [docs/deployment.md](docs/deploymen
 
 ## How to run
 
-Python 3.11+. Create a venv, then:
+Python 3.11+. Secrets live in `.env` (gitignored). Copy the example first, then set `LLM_MODEL` and the matching provider key. Never commit `.env` and never pass keys on the command line.
 
-```bash
+`--assemble-only` needs no API key. A full run without `LLM_MODEL` fails closed with a config error. HITL pause writes `inbox/needs_human/{lead_id}/` and `bus/intake-needs-review/{lead_id}.json`. `resume` publishes `IntakeDecision` and continues the MAF checkpoint. Tests mock LiteLLM (see [adr009](docs/adrs/adr009.md)); they never call a live provider.
+
+### Local venv
+
+Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -U pip
 pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Set `LLM_MODEL` and the matching provider key in `.env`. Never commit `.env`.
+Unix:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Then:
 
 ```bash
 python -m src.pipeline --list
@@ -67,14 +86,78 @@ pytest
 pytest --cov=src
 ```
 
-`--assemble-only` needs no API key. A full run without `LLM_MODEL` fails closed with a config error. HITL pause writes `inbox/needs_human/{lead_id}/` and `bus/intake-needs-review/{lead_id}.json`. `resume` publishes `IntakeDecision` and continues the MAF checkpoint. Tests mock LiteLLM (see [adr009](docs/adrs/adr009.md)); they never call a live provider.
+### Docker
+
+The image is the same one-shot CLI (see [adr010](docs/adrs/adr010.md)). The container **exits when the command finishes**. Compose does not start an LLM, a bus, or a database — those are env vars and host folders.
+
+Create `.env` before Compose (`env_file: .env` fails if the file is missing):
+
+```powershell
+copy .env.example .env
+```
+
+Build:
+
+```bash
+docker compose build
+docker build -t taller-intake .
+```
+
+Run (stdout is the log):
+
+```bash
+docker compose run --rm intake --list
+docker compose run --rm intake --assemble-only lead-happy
+docker compose run --rm intake lead-happy
+docker compose run --rm intake resume lead-happy --decision bid --notes "Fits portal rebuild"
+```
+
+Equivalent `docker run` (PowerShell uses `${PWD}`; Unix uses `$(pwd)`):
+
+```powershell
+docker run --rm --env-file .env `
+  -v ${PWD}/inbox:/app/inbox `
+  -v ${PWD}/bus:/app/bus `
+  -v ${PWD}/checkpoints:/app/checkpoints `
+  taller-intake --list
+```
+
+```bash
+docker run --rm --env-file .env \
+  -v "$(pwd)/inbox:/app/inbox" \
+  -v "$(pwd)/bus:/app/bus" \
+  -v "$(pwd)/checkpoints:/app/checkpoints" \
+  taller-intake --list
+```
+
+Logs after a run that kept the container (omit `--rm`):
+
+```bash
+docker compose run --name intake-run intake --list
+docker logs intake-run
+docker rm intake-run
+```
+
+Inspect image, last container, and merged Compose config (env **names**, not secret values):
+
+```bash
+docker image inspect taller-intake
+docker inspect intake-run
+docker compose config
+```
+
+Exec is only useful while a process is running. Normal CLI runs are too short; open a shell instead:
+
+```bash
+docker compose run --rm --entrypoint sh intake
+```
 
 ## Design decisions
 
 - **Single source of truth for agents:** `AGENTS.md`.
 - **MAF orchestrates; LiteLLM generates.** Not LangGraph. See adr003 and adr004.
 - **Fail closed.** Timeout, schema, policy, thin dossier, leftover binary, over-cap → HITL. Never email the lead.
-- **English only** in this repo. Record new technical choices as `docs/adrs/adr009.md` onward.
+- **English only** in this repo. Record new technical choices as `docs/adrs/adr011.md` onward.
 
 ## Repository layout
 
@@ -88,6 +171,8 @@ src/workflow.py           # MAF graph + HITL
 src/llm.py                # LiteLLM adapter
 src/bus.py                # file bus port
 src/pipeline.py           # CLI
+Dockerfile                # CLI image (no .env baked in)
+docker-compose.yml        # one service; env_file + volumes
 tests/unit/               # module tests; LiteLLM mocked
 tests/integration/        # MAF in-process; call_llm mocked
 ```

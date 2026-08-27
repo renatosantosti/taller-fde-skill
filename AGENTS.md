@@ -11,7 +11,7 @@ Submission repository for **The AI Forward-Deployed Engineer (FDE)** training: T
 - The business case is chosen. Do not invent a different company or process.
 - The pipeline **starts at `inbox/pending/`**. Do not implement Tesseract, Azure Document Intelligence, email, or WhatsApp.
 - Orchestration is **Microsoft Agent Framework** (`src/workflow.py`). The only model call is **LiteLLM** (`src/llm.py`). HITL uses a **bus port** with a file-bus implementation (`src/bus.py`).
-- Record new important technical decisions as the next file in `docs/adrs/` (`adr009.md`, …).
+- Record new important technical decisions as the next file in `docs/adrs/` (`adr011.md`, …).
 - **Do not commit, push, or `--amend` without explicit authorization.**
 
 ## Language

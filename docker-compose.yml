@@ -1,0 +1,10 @@
+# One-shot CLI worker. No extra services — LLM keys come from .env.
+services:
+  intake:
+    build: .
+    image: taller-intake
+    env_file: .env
+    volumes:
+      - ./inbox:/app/inbox
+      - ./bus:/app/bus
+      - ./checkpoints:/app/checkpoints

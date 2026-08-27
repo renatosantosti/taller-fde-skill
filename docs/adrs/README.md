@@ -13,5 +13,6 @@ Important technical choices for this FDE submission. One decision per file, numb
 | [adr007.md](adr007.md) | Fail closed to HITL |
 | [adr008.md](adr008.md) | English-only repo artifacts |
 | [adr009.md](adr009.md) | Tests mock LiteLLM; MAF runs in-process |
+| [adr010.md](adr010.md) | Docker packages the CLI worker; secrets via `.env` |
 
-New important decisions continue as `adr010.md`.
+New important decisions continue as `adr011.md`.
